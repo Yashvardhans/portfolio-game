@@ -1,0 +1,32 @@
+{
+  "elder": {
+    "x": 512,
+    "y": 480,
+    "width": 48,
+    "height": 48
+  },
+  "home": {
+    "x": 380,
+    "y": 280,
+    "width": 140,
+    "height": 120
+  },
+  "workshop": {
+    "x": 650,
+    "y": 260,
+    "width": 150,
+    "height": 130
+  },
+  "forest": {
+    "x": 300,
+    "y": 650,
+    "width": 160,
+    "height": 140
+  },
+  "postOffice": {
+    "x": 700,
+    "y": 650,
+    "width": 150,
+    "height": 130
+  }
+}
