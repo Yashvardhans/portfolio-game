@@ -72,13 +72,13 @@ export default function VillageScene({ onChangeScene }) {
       <WorldViewport>
         <WorldLayer cameraX={camera.camX} cameraY={camera.camY}>
           {/* Elder: isTalking while dialogue is open */}
-          <ElderNPC
+          {!isDialogueOpen ? <ElderNPC
             x={ELDER_POS.x}
             y={ELDER_POS.y}
             isTalking={isDialogueOpen}
             onClick={openElderDialogue}
             size={64}
-          />
+          />: null}
 
           {/* TODO: building hotspots components go here */}
         </WorldLayer>
@@ -87,13 +87,10 @@ export default function VillageScene({ onChangeScene }) {
         <div className="absolute left-0 right-0 bottom-6 flex justify-center pointer-events-none">
           <div className="pointer-events-auto">
             <DialogueBox
-              isOpen={isDialogueOpen && !!currentNode}
-              speakerName={currentNode?.speakerName}
-              title={currentNode?.title}
-              text={currentNode?.text}
-              choices={currentNode?.choices || []}
+              dialogue={ELDER_DIALOGUE}
+              currentNodeId={currentNodeId}
+              isOpen={isDialogueOpen}
               onChoice={handleDialogueChoice}
-              onClose={closeDialogue}
             />
           </div>
         </div>
