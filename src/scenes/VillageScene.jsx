@@ -52,7 +52,7 @@ export default function VillageScene({ onChangeScene }) {
   const ELDER_POS = { x: 1250, y: 1300 };
 
  
-  const [playerPos, setPlayerPos] = useState({ x: 1200, y: 1400 });
+  const [playerPos, setPlayerPos] = useState({ x: 1200, y: 1600 });
 
   const [camera, setCamera] = useState({ camX: 0, camY: 0 });
 
@@ -188,13 +188,12 @@ export default function VillageScene({ onChangeScene }) {
           )}
 
           {/* LANDMARKS */}
-          <Landmark name="Home" x={1000} y={1100} />
+          <Landmark name="Home" x={900} y={1100} />
           <Landmark name="Workshop" x={1500} y={1100} />
           <Landmark name="Forest" x={1250} y={800} />
           <Landmark name="Post Office" x={1700} y={1500} />
         </WorldLayer>
 
-        {/* DIALOGUE UI */}
         <div className="absolute left-0 right-0 bottom-6 flex justify-center pointer-events-none">
           <div className="pointer-events-auto">
             <DialogueBox
