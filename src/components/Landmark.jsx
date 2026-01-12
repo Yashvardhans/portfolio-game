@@ -19,7 +19,7 @@ export default function Landmark({
 
   return (
     <div
-      className="absolute pointer-events-none font-serif text-yellow-200"
+      className="absolute pointer-events-none font-serif text-blue-600"
       style={{
         left: x,
         top: y,
