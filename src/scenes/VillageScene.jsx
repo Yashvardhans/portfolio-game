@@ -8,6 +8,8 @@ import ElderNPC from "@/components/npc/ElderNPC";
 import DialogueBox from "@/components/DialogueBox";
 import Player from "@/components/npc/Player";
 import { ELDER_DIALOGUE } from "@/data/elderDialogue";
+import WanderingNPC from "@/components/npc/WanderingNpc";
+
 import { SCENES } from "@/constants/scenes";
 
 /* ---------------- HELPERS ---------------- */
@@ -122,15 +124,18 @@ export default function VillageScene({ onChangeScene }) {
 
         setIsMoving(!!moving);
 
-        if (keysRef.current["a"] || keysRef.current["ArrowLeft"]) nextX -= speed;
-        if (keysRef.current["d"] || keysRef.current["ArrowRight"]) nextX += speed;
+        if (keysRef.current["a"] || keysRef.current["ArrowLeft"])
+          nextX -= speed;
+        if (keysRef.current["d"] || keysRef.current["ArrowRight"])
+          nextX += speed;
 
         if (!collides(nextX, pos.y, COLLIDERS)) {
           pos = { ...pos, x: nextX };
         }
 
         if (keysRef.current["w"] || keysRef.current["ArrowUp"]) nextY -= speed;
-        if (keysRef.current["s"] || keysRef.current["ArrowDown"]) nextY += speed;
+        if (keysRef.current["s"] || keysRef.current["ArrowDown"])
+          nextY += speed;
 
         if (!collides(pos.x, nextY, COLLIDERS)) {
           pos = { ...pos, y: nextY };
@@ -229,10 +234,16 @@ export default function VillageScene({ onChangeScene }) {
     <div ref={viewportRef} className="w-full h-full">
       <WorldViewport>
         <WorldLayer cameraX={camera.camX} cameraY={camera.camY}>
-          <Player
-            x={playerPos.x}
-            y={playerPos.y}
-            isMoving={isMoving}
+          <Player x={playerPos.x} y={playerPos.y} isMoving={isMoving} />
+          <WanderingNPC
+            startX={1400}
+            startY={1200}
+            radius={150}
+            speed={0.5}
+            isPaused={isDialogueOpen}
+            colliders={COLLIDERS}
+            worldWidth={WORLD_W}
+            worldHeight={WORLD_H}
           />
 
           {!isDialogueOpen && (
