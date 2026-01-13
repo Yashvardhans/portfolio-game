@@ -6,28 +6,27 @@ import WorldLayer from "@/components/world/WorldLayer";
 import { getCameraPosition } from "@/components/world/CameraFollow";
 import ElderNPC from "@/components/npc/ElderNPC";
 import DialogueBox from "@/components/DialogueBox";
+import Player from "@/components/npc/Player";
 import { ELDER_DIALOGUE } from "@/data/elderDialogue";
 import { SCENES } from "@/constants/scenes";
 
-/* ---------- PLAYER ---------- */
-function Player({ x, y }) {
-  return (
-    <div
-      className="absolute z-20"
-      style={{
-        left: x,
-        top: y,
-        width: 32,
-        height: 32,
-        transform: "translate(-50%, -50%)",
-      }}
-    >
-      <div className="h-6 w-6 rounded-full bg-blue-500 border-2 border-black" />
-    </div>
-  );
+/* ---------------- HELPERS ---------------- */
+
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+function collides(x, y, colliders) {
+  return colliders.some((c) => {
+    return (
+      x > c.x - c.w / 2 &&
+      x < c.x + c.w / 2 &&
+      y > c.y - c.h / 2 &&
+      y < c.y + c.h / 2
+    );
+  });
 }
 
-/* ---------- LANDMARK LABEL ---------- */
+/* ---------------- LANDMARK LABEL ---------------- */
+
 function Landmark({ name, x, y }) {
   return (
     <div
@@ -46,6 +45,8 @@ function Landmark({ name, x, y }) {
 export default function VillageScene({ onChangeScene }) {
   const viewportRef = useRef(null);
 
+  /* ---------------- WORLD ---------------- */
+
   const WORLD_W = 2400;
   const WORLD_H = 2400;
 
@@ -58,18 +59,30 @@ export default function VillageScene({ onChangeScene }) {
     { name: "Post Office", x: 1700, y: 1500, scene: SCENES.POST_OFFICE },
   ];
 
-  /* ---------- PLAYER ---------- */
+  const COLLIDERS = [
+    { x: 1000, y: 1100, w: 120, h: 80 },
+    { x: 1500, y: 1100, w: 140, h: 90 },
+    { x: 1250, y: 800, w: 200, h: 120 },
+    { x: 1700, y: 1500, w: 120, h: 80 },
+  ];
+
+  /* ---------------- PLAYER ---------------- */
+
   const [playerPos, setPlayerPos] = useState({ x: 1200, y: 1400 });
+  const [isMoving, setIsMoving] = useState(false);
   const [nearBuilding, setNearBuilding] = useState(null);
 
-  /* ---------- CAMERA ---------- */
+  /* ---------------- CAMERA ---------------- */
+
   const [camera, setCamera] = useState({ camX: 0, camY: 0 });
 
-  /* ---------- DIALOGUE ---------- */
+  /* ---------------- DIALOGUE ---------------- */
+
   const [isDialogueOpen, setIsDialogueOpen] = useState(false);
   const [currentNodeId, setCurrentNodeId] = useState(null);
 
-  /* ---------- INPUT ---------- */
+  /* ---------------- INPUT ---------------- */
+
   const keysRef = useRef({});
 
   useEffect(() => {
@@ -84,7 +97,8 @@ export default function VillageScene({ onChangeScene }) {
     };
   }, []);
 
-  /* ---------- MOVEMENT ---------- */
+  /* ---------------- MOVEMENT LOOP ---------------- */
+
   useEffect(() => {
     if (isDialogueOpen) return;
 
@@ -93,18 +107,39 @@ export default function VillageScene({ onChangeScene }) {
 
     const loop = () => {
       setPlayerPos((pos) => {
-        let x = pos.x;
-        let y = pos.y;
+        let nextX = pos.x;
+        let nextY = pos.y;
 
-        if (keysRef.current["w"] || keysRef.current["ArrowUp"]) y -= speed;
-        if (keysRef.current["s"] || keysRef.current["ArrowDown"]) y += speed;
-        if (keysRef.current["a"] || keysRef.current["ArrowLeft"]) x -= speed;
-        if (keysRef.current["d"] || keysRef.current["ArrowRight"]) x += speed;
+        const moving =
+          keysRef.current["w"] ||
+          keysRef.current["a"] ||
+          keysRef.current["s"] ||
+          keysRef.current["d"] ||
+          keysRef.current["ArrowUp"] ||
+          keysRef.current["ArrowDown"] ||
+          keysRef.current["ArrowLeft"] ||
+          keysRef.current["ArrowRight"];
 
-        x = Math.max(0, Math.min(WORLD_W, x));
-        y = Math.max(0, Math.min(WORLD_H, y));
+        setIsMoving(!!moving);
 
-        return { x, y };
+        if (keysRef.current["a"] || keysRef.current["ArrowLeft"]) nextX -= speed;
+        if (keysRef.current["d"] || keysRef.current["ArrowRight"]) nextX += speed;
+
+        if (!collides(nextX, pos.y, COLLIDERS)) {
+          pos = { ...pos, x: nextX };
+        }
+
+        if (keysRef.current["w"] || keysRef.current["ArrowUp"]) nextY -= speed;
+        if (keysRef.current["s"] || keysRef.current["ArrowDown"]) nextY += speed;
+
+        if (!collides(pos.x, nextY, COLLIDERS)) {
+          pos = { ...pos, y: nextY };
+        }
+
+        return {
+          x: clamp(pos.x, 16, WORLD_W - 16),
+          y: clamp(pos.y, 16, WORLD_H - 16),
+        };
       });
 
       raf = requestAnimationFrame(loop);
@@ -114,7 +149,8 @@ export default function VillageScene({ onChangeScene }) {
     return () => cancelAnimationFrame(raf);
   }, [isDialogueOpen]);
 
-  /* ---------- CAMERA FOLLOW ---------- */
+  /* ---------------- CAMERA FOLLOW ---------------- */
+
   useEffect(() => {
     if (!viewportRef.current) return;
 
@@ -132,37 +168,36 @@ export default function VillageScene({ onChangeScene }) {
     setCamera({ camX, camY });
   }, [playerPos]);
 
-  /* ---------- BUILDING PROXIMITY ---------- */
+  /* ---------------- BUILDING PROXIMITY ---------------- */
+
   useEffect(() => {
     let found = null;
-
     for (const b of BUILDINGS) {
-      const dist = Math.hypot(playerPos.x - b.x, playerPos.y - b.y);
-      if (dist < 50) {
+      if (Math.hypot(playerPos.x - b.x, playerPos.y - b.y) < 50) {
         found = b;
         break;
       }
     }
-
     setNearBuilding(found);
   }, [playerPos]);
 
-  /* ---------- PRESS E TO ENTER ---------- */
- useEffect(() => {
-  const handleEnter = (e) => {
-    if (isDialogueOpen) return;
-    if (!nearBuilding) return;
+  /* ---------------- PRESS E TO ENTER ---------------- */
 
-    if (e.key === "e" || e.key === "E") {
-      onChangeScene && onChangeScene(nearBuilding.scene);
-    }
-  };
+  useEffect(() => {
+    const onKey = (e) => {
+      if (isDialogueOpen) return;
+      if (!nearBuilding) return;
+      if (e.key === "e" || e.key === "E") {
+        onChangeScene && onChangeScene(nearBuilding.scene);
+      }
+    };
 
-  window.addEventListener("keydown", handleEnter);
-  return () => window.removeEventListener("keydown", handleEnter);
-}, [nearBuilding, isDialogueOpen, onChangeScene]);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [nearBuilding, isDialogueOpen, onChangeScene]);
 
-  /* ---------- DIALOGUE ---------- */
+  /* ---------------- DIALOGUE HANDLERS ---------------- */
+
   const openElderDialogue = () => {
     setCurrentNodeId("intro");
     setIsDialogueOpen(true);
@@ -188,11 +223,17 @@ export default function VillageScene({ onChangeScene }) {
     }
   };
 
+  /* ---------------- RENDER ---------------- */
+
   return (
     <div ref={viewportRef} className="w-full h-full">
       <WorldViewport>
         <WorldLayer cameraX={camera.camX} cameraY={camera.camY}>
-          <Player x={playerPos.x} y={playerPos.y} />
+          <Player
+            x={playerPos.x}
+            y={playerPos.y}
+            isMoving={isMoving}
+          />
 
           {!isDialogueOpen && (
             <ElderNPC
@@ -209,14 +250,12 @@ export default function VillageScene({ onChangeScene }) {
           ))}
         </WorldLayer>
 
-        {/* PRESS E HINT */}
         {nearBuilding && !isDialogueOpen && (
           <div className="absolute bottom-20 w-full text-center text-yellow-200 font-serif">
-            Press <span className="font-bold">E</span> to enter {nearBuilding.name}
+            Press <b>E</b> to enter {nearBuilding.name}
           </div>
         )}
 
-        {/* DIALOGUE */}
         <div className="absolute left-0 right-0 bottom-6 flex justify-center pointer-events-none">
           <div className="pointer-events-auto">
             <DialogueBox

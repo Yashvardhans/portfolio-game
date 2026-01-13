@@ -1,18 +1,22 @@
 "use client";
 
-export default function Player({ position }) {
+export default function Player({ x, y, isMoving }) {
   return (
     <div
       className="absolute z-20"
       style={{
-        left: position.x,
-        top: position.y,
+        left: x,
+        top: y,
         width: 32,
         height: 32,
         transform: "translate(-50%, -50%)",
       }}
     >
-      <div className="h-6 w-6 rounded-full bg-blue-500 border-2 border-black" />
+      <div
+        className={`h-6 w-6 rounded-full border-2 border-black bg-blue-500 ${
+          isMoving ? "animate-bounce" : ""
+        }`}
+      />
     </div>
   );
 }
